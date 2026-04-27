@@ -59,6 +59,18 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         )
     return user
 
+def get_current_user_optional(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Optional dependency to get the current user if a token is present."""
+    try:
+        payload = decode_access_token(token)
+        if payload:
+            email = payload.get("sub")
+            if email:
+                return db.query(models.User).filter(models.User.email == email).first()
+    except Exception:
+        pass
+    return None
+
 def require_admin(current_user: models.User = Depends(get_current_user)):
     """Dependency to ensure the current user is an admin."""
     if current_user.role != models.UserRole.ADMIN:

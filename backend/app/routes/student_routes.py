@@ -36,3 +36,15 @@ def create_student(
 ):
     """Create a new student. (Admin Only)"""
     return student_service.create_student(db, student_in)
+
+@router.delete("/{student_id}")
+def delete_student(
+    student_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin)
+):
+    """Delete a student. (Admin Only)"""
+    success = student_service.delete_student(db, student_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return {"message": "Student deleted successfully"}

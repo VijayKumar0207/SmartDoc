@@ -27,3 +27,12 @@ def create_student(db: Session, student_in: schemas.StudentCreate) -> models.Stu
     db.commit()
     db.refresh(db_student)
     return db_student
+
+def delete_student(db: Session, student_id: int) -> bool:
+    """Delete a student record and all associated documents."""
+    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if db_student:
+        db.delete(db_student)
+        db.commit()
+        return True
+    return False

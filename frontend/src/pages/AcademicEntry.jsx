@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { studentService } from '../services/api';
-import { UserPlus, Users, Search, Filter, BookOpen, GraduationCap, Mail, Calendar, Hash, CheckCircle2, XCircle } from 'lucide-react';
+import { UserPlus, Users, Search, Filter, BookOpen, GraduationCap, Mail, Calendar, Hash, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 
 const AcademicEntry = () => {
     const [students, setStudents] = useState([]);
@@ -35,6 +35,20 @@ const AcademicEntry = () => {
             setStudents([]); // Ensure students is an empty array on error to stop loader
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (studentId) => {
+        if (!window.confirm('Are you sure you want to delete this student? All their documents will also be deleted.')) {
+            return;
+        }
+
+        try {
+            await studentService.delete(studentId);
+            setStudents(students.filter(s => s.id !== studentId));
+        } catch (err) {
+            console.error('Failed to delete student', err);
+            alert('Failed to delete student');
         }
     };
 
@@ -161,8 +175,8 @@ const AcademicEntry = () => {
                                 onChange={handleInputChange}
                                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                             >
-                                <option value="">Select Branch</option>
-                                {branches.map(b => <option key={b} value={b}>{b}</option>)}
+                                <option value="" className="bg-slate-900 text-white">Select Branch</option>
+                                {branches.map(b => <option key={b} value={b} className="bg-slate-900 text-white">{b}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
@@ -222,8 +236,8 @@ const AcademicEntry = () => {
                         onChange={(e) => setSelectedBranch(e.target.value)}
                         className="bg-transparent text-white focus:outline-none cursor-pointer font-medium"
                     >
-                        <option value="">All Branches</option>
-                        {branches.map(b => <option key={b} value={b}>{b}</option>)}
+                        <option value="" className="bg-slate-800 text-white">All Branches</option>
+                        {branches.map(b => <option key={b} value={b} className="bg-slate-800 text-white">{b}</option>)}
                     </select>
                 </div>
             </div>
@@ -246,12 +260,13 @@ const AcademicEntry = () => {
                                 <th className="px-6 py-4">Branch</th>
                                 <th className="px-6 py-4">Year</th>
                                 <th className="px-6 py-4">Email</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-10 text-center">
+                                    <td colSpan="6" className="px-6 py-10 text-center">
                                         <div className="flex items-center justify-center space-x-2 text-blue-400">
                                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent"></div>
                                             <span className="font-medium animate-pulse">Loading dataset...</span>
@@ -278,11 +293,18 @@ const AcademicEntry = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-slate-400 text-sm italic">
                                             {student.email}
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="flex items-center justify-end space-x-3">
+                                                <button className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500 italic">
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500 italic">
                                         No students found matching your criteria.
                                     </td>
                                 </tr>

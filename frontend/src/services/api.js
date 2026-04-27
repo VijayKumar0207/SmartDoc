@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,6 +42,12 @@ export const studentService = {
   list: (branch) => api.get('/students/', { params: { branch } }),
   search: (query) => api.get('/students/search', { params: { query } }),
   create: (data) => api.post('/students/', data),
+  delete: (id) => api.delete(`/students/${id}`),
+};
+
+export const authService = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  signup: (name, email, password) => api.post('/auth/signup', { name, email, password }),
 };
 
 export const docGenerationService = {

@@ -13,6 +13,7 @@ CREATE TABLE documents (
 CREATE TABLE verification_logs (
     id SERIAL PRIMARY KEY,
     document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
+    verifier_id INTEGER REFERENCES users(id),
     status VARCHAR(50) NOT NULL, -- VALID, TAMPERED, NO_SIGNATURE, INVALID
     message TEXT,
     verified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

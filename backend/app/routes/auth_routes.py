@@ -3,16 +3,38 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.db.database import get_db
 from app.db import models, schemas
-from app.utils.hash_utils import verify_password
+from app.utils.hash_utils import verify_password, hash_password
 from app.utils.auth_utils import create_access_token
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
+@router.post("/signup", response_model=schemas.UserResponse)
+def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Registers a new user with USER role."""
+    # Check if user already exists (case-insensitive)
+    existing_user = db.query(models.User).filter(func.lower(models.User.email) == func.lower(user_in.email)).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    new_user = models.User(
+        name=user_in.name,
+        email=user_in.email,
+        password_hash=hash_password(user_in.password),
+        role=models.UserRole.USER
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+from sqlalchemy import func
+
 @router.post("/login", response_model=schemas.Token)
 def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     """Authenticates a user and returns a JWT token."""
-    user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
+    user = db.query(models.User).filter(func.lower(models.User.email) == func.lower(user_credentials.email)).first()
     
     if not user:
         raise HTTPException(

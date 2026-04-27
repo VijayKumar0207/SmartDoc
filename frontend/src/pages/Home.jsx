@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { verifyService, studentService } from '../services/api';
+import { useAuth } from '../services/AuthContext';
 import { History, Activity, ShieldCheck, AlertTriangle, PieChart as PieIcon, TrendingUp } from 'lucide-react';
 import { 
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -7,15 +8,18 @@ import {
 } from 'recharts';
 
 const Home = () => {
+  const { isAdmin, user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ total: 0, valid: 0, tampered: 0 });
   const [branchData, setBranchData] = useState([]);
   const [trendData, setTrendData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        // Fetch logs (accessible to all authenticated users)
+        // Fetch logs (filtered by backend based on role)
         const logsRes = await verifyService.getLogs();
         const logsData = logsRes.data;
         
@@ -52,33 +56,47 @@ const Home = () => {
         console.error('Failed to fetch dashboard logs', err);
       }
 
-      try {
-        // Fetch students (admin only)
-        const studentsRes = await studentService.list();
-        const studentsData = studentsRes.data;
-        
-        // Branch Distribution (Pie Chart)
-        const branches = {};
-        studentsData.forEach(s => {
-          branches[s.branch] = (branches[s.branch] || 0) + 1;
-        });
-        setBranchData(Object.keys(branches).map(name => ({ name, value: branches[name] })));
-      } catch (err) {
-        console.warn('Could not fetch students (User might not be an admin):', err.message);
-        // Provide empty or dummy data so the pie chart doesn't break, or just leave branchData empty
+      if (isAdmin) {
+        try {
+          // Fetch students (admin only)
+          const studentsRes = await studentService.list();
+          const studentsData = studentsRes.data;
+          
+          // Branch Distribution (Pie Chart)
+          const branches = {};
+          studentsData.forEach(s => {
+            branches[s.branch] = (branches[s.branch] || 0) + 1;
+          });
+          setBranchData(Object.keys(branches).map(name => ({ name, value: branches[name] })));
+        } catch (err) {
+          console.warn('Could not fetch students:', err.message);
+        }
       }
+      setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [isAdmin]);
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="h-12 w-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-10">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">System Intelligence</h1>
-          <p className="mt-1 text-slate-400">Real-time cryptographic verification metrics.</p>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight">
+            {isAdmin ? 'System Intelligence' : `Welcome, ${user?.name || 'User'}`}
+          </h1>
+          <p className="mt-1 text-slate-400">
+            {isAdmin ? 'Real-time cryptographic verification metrics.' : 'Your personal document verification activity.'}
+          </p>
         </div>
         <div className="flex items-center space-x-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
           <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -88,19 +106,21 @@ const Home = () => {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard icon={Activity} label="Total Scans" value={stats.total} color="blue" />
+        <StatCard icon={Activity} label={isAdmin ? "Total Scans" : "My Verifications"} value={stats.total} color="blue" />
         <StatCard icon={ShieldCheck} label="Verified Valid" value={stats.valid} color="green" />
         <StatCard icon={AlertTriangle} label="Compromised" value={stats.tampered} color="red" />
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-8`}>
         {/* Trend Chart */}
         <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3 text-blue-400">
               <TrendingUp className="h-6 w-6" />
-              <h3 className="text-lg font-black uppercase tracking-widest">Verification Trend</h3>
+              <h3 className="text-lg font-black uppercase tracking-widest">
+                {isAdmin ? 'Global Verification Trend' : 'My Activity Trend'}
+              </h3>
             </div>
             <span className="text-[10px] bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-bold uppercase tracking-tighter">Last 7 Days</span>
           </div>
@@ -125,38 +145,40 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Pie Chart */}
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-3 text-emerald-400">
-              <PieIcon className="h-6 w-6" />
-              <h3 className="text-lg font-black uppercase tracking-widest">Branch Distribution</h3>
+        {/* Pie Chart (Admin Only) */}
+        {isAdmin && (
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-3 text-emerald-400">
+                <PieIcon className="h-6 w-6" />
+                <h3 className="text-lg font-black uppercase tracking-widest">Branch Distribution</h3>
+              </div>
+            </div>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={branchData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {branchData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+                  />
+                  <Legend iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={branchData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {branchData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
-                />
-                <Legend iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* History Table */}
@@ -164,7 +186,9 @@ const Home = () => {
         <div className="p-8 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <History className="h-6 w-6 text-blue-400" />
-            <h2 className="text-xl font-black uppercase tracking-widest text-white">Live Activity Log</h2>
+            <h2 className="text-xl font-black uppercase tracking-widest text-white">
+              {isAdmin ? 'Live Activity Log' : 'My Recent Verifications'}
+            </h2>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -206,6 +230,8 @@ const Home = () => {
     </div>
   );
 };
+
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 const StatCard = ({ icon: Icon, label, value, color }) => {
   const colorMap = {

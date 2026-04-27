@@ -56,8 +56,10 @@ class VerificationLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     document_id = Column(Integer, ForeignKey("documents.id"))
+    verifier_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Who performed the verification
     status = Column(String(50), nullable=False) # VALID / TAMPERED / NO_SIGNATURE
     message = Column(String(500), nullable=True)
     verified_at = Column(DateTime(timezone=True), server_default=func.now())
 
     document = relationship("Document", back_populates="verifications")
+    verifier = relationship("User")

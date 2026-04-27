@@ -39,6 +39,8 @@ CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(document_hash);
 CREATE TABLE IF NOT EXISTS verification_logs (
     id SERIAL PRIMARY KEY,
     document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+    verifier_id INTEGER REFERENCES users(id),
     status VARCHAR(50) NOT NULL, -- VALID / TAMPERED / NO_SIGNATURE
+    message VARCHAR(500),
     verified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

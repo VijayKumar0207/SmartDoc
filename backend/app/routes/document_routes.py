@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db import models, schemas
 from app.services import document_service
-from app.utils.auth_utils import require_admin
+from app.utils.auth_utils import require_admin, get_current_user_optional
 from app.utils.email_utils import send_email_with_attachment
 from pydantic import BaseModel
 import os
@@ -29,15 +29,28 @@ async def generate_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/verify-public/{uuid}", response_model=schemas.DocumentResponse)
 async def get_document_by_uuid(
     uuid: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_optional)
 ):
-    """Public verification route to get document details by unique UUID."""
+    """Public verification route to get document details by unique UUID and log the event."""
     doc = db.query(models.Document).filter(models.Document.verification_uuid == uuid).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found or invalid UUID")
+    
+    # Log the verification event
+    log = models.VerificationLog(
+        document_id=doc.id,
+        verifier_id=current_user.id if current_user else None,
+        status="VALID",
+        message=f"Public QR Verification for {doc.student.name}"
+    )
+    db.add(log)
+    db.commit()
+    
     return doc
 
 @router.post("/share/{document_id}")
