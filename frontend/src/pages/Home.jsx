@@ -19,18 +19,31 @@ const Home = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch logs (filtered by backend based on role)
+        
         const logsRes = await verifyService.getLogs();
         const logsData = logsRes.data;
         
         setLogs(logsData);
 
-        // Basic Stats
+        
         const valid = logsData.filter(l => l.status === 'VALID').length;
-        const tampered = logsData.filter(l => l.status === 'TAMPERED').length;
+        
+        const isTamperedStatus = (status) => {
+          if (!status) return false;
+          const s = status.toString().toUpperCase().trim();
+          
+          return s !== 'VALID' && s !== 'SUCCESS' && s !== 'OK';
+        };
+        
+       
+        const tampered = isAdmin 
+          ? logsData.filter(l => isTamperedStatus(l.status)).length
+          : logsData.filter(l => isTamperedStatus(l.status) && l.verifier_id == user?.id).length;
+        
+        console.log('Dashboard Stats:', { total: logsData.length, valid, tampered, isAdmin, userId: user?.id, statuses: logsData.map(l => l.status) });
         setStats({ total: logsData.length, valid, tampered });
 
-        // Verification Trend (Last 7 Days)
+        
         const trend = {};
         const now = new Date();
         for (let i = 6; i >= 0; i--) {
@@ -58,11 +71,11 @@ const Home = () => {
 
       if (isAdmin) {
         try {
-          // Fetch students (admin only)
+          
           const studentsRes = await studentService.list();
           const studentsData = studentsRes.data;
           
-          // Branch Distribution (Pie Chart)
+          
           const branches = {};
           studentsData.forEach(s => {
             branches[s.branch] = (branches[s.branch] || 0) + 1;
@@ -75,7 +88,7 @@ const Home = () => {
       setLoading(false);
     };
     fetchData();
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
@@ -108,7 +121,7 @@ const Home = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard icon={Activity} label={isAdmin ? "Total Scans" : "My Verifications"} value={stats.total} color="blue" />
         <StatCard icon={ShieldCheck} label="Verified Valid" value={stats.valid} color="green" />
-        <StatCard icon={AlertTriangle} label="Compromised" value={stats.tampered} color="red" />
+        <StatCard icon={AlertTriangle} label="Tampered" value={stats.tampered} color="red" />
       </div>
 
       {/* Charts Section */}

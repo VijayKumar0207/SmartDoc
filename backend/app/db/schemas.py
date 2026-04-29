@@ -43,6 +43,7 @@ class VerificationLogBase(BaseModel):
 class VerificationLogResponse(VerificationLogBase):
     id: int
     document_id: Optional[int] = None
+    verifier_id: Optional[int] = None
     verified_at: datetime
 
     class Config:
@@ -72,6 +73,7 @@ class Token(BaseModel):
     token_type: str
     user_role: str
     user_name: str
+    user_id: int
 
 class TokenData(BaseModel):
     email: Optional[str] = None

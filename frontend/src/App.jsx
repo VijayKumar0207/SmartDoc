@@ -10,7 +10,7 @@ import AcademicEntry from './pages/AcademicEntry';
 import Login from './pages/Login';
 import PublicVerify from './pages/PublicVerify';
 
-// Protected Route Component
+
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 

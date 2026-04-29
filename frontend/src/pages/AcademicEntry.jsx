@@ -39,10 +39,6 @@ const AcademicEntry = () => {
     };
 
     const handleDelete = async (studentId) => {
-        if (!window.confirm('Are you sure you want to delete this student? All their documents will also be deleted.')) {
-            return;
-        }
-
         try {
             await studentService.delete(studentId);
             setStudents(students.filter(s => s.id !== studentId));
@@ -295,7 +291,11 @@ const AcademicEntry = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end space-x-3">
-                                                <button className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete">
+                                                <button 
+                                                    onClick={() => handleDelete(student.id)}
+                                                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors" 
+                                                    title="Delete"
+                                                >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>

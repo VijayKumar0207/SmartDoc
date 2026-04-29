@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
+    
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     
@@ -23,9 +23,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { access_token, user_name, user_role } = response.data;
+      const { access_token, user_name, user_role, user_id } = response.data;
       
-      const userData = { email, name: user_name, role: user_role };
+      const userData = { id: user_id, email, name: user_name, role: user_role };
       
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'ADMIN'
+    isAdmin: user?.role?.toString().toUpperCase() === 'ADMIN'
   };
 
   return (

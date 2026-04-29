@@ -4,18 +4,17 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-# Load .env from root
+
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 def create_db():
-    # Load database URL from .env
+    
     db_url_full = os.getenv("DATABASE_URL")
     if not db_url_full:
         print("DATABASE_URL not found in .env")
         return
 
-    # We need to connect to the default 'postgres' database to create a new one
-    # Strip the target db name and replace with 'postgres'
+    
     base_url = db_url_full.rsplit("/", 1)[0] + "/postgres"
     
     print(f"Attempting to connect to: {base_url}")
@@ -25,7 +24,7 @@ def create_db():
     
     try:
         with engine.connect() as conn:
-            # Check if database exists
+           
             res = conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname='{db_name}'"))
             if not res.fetchone():
                 print(f"Creating database {db_name}...")

@@ -1,4 +1,3 @@
-# seed.py
 import sys
 from sqlalchemy.orm import Session
 from app.db.database import SessionLocal, engine
@@ -8,12 +7,12 @@ from app.utils.hash_utils import hash_password
 def seed():
     print("Seeding database...")
     
-    # Create tables if they don't exist (though schema.sql should handle this)
+    
     Base.metadata.create_all(bind=engine)
     
     db: Session = SessionLocal()
     try:
-        # Check if admin already exists
+       
         admin_email = "admin@example.com"
         existing_admin = db.query(User).filter(User.email == admin_email).first()
         
@@ -22,14 +21,14 @@ def seed():
             admin = User(
                 name="System Admin",
                 email=admin_email,
-                password_hash=hash_password("admin123"), # Change this in production!
+                password_hash=hash_password("admin123"),
                 role=UserRole.ADMIN
             )
             db.add(admin)
         else:
             print(f"Admin user {admin_email} already exists.")
 
-        # Create two normal users
+       
         users_data = [
             {"name": "John Doe", "email": "john@example.com", "pass": "user123"},
             {"name": "Jane Smith", "email": "jane@example.com", "pass": "user123"}

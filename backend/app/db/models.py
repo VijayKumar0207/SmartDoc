@@ -33,7 +33,7 @@ class Student(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    documents = relationship("Document", back_populates="student")
+    documents = relationship("Document", back_populates="student", cascade="all, delete-orphan")
 
 class Document(Base):
     __tablename__ = "documents"

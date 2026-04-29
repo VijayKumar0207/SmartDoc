@@ -1,14 +1,14 @@
 import sys
 import os
 
-# Add the current directory to sys.path to allow imports from app
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.db.database import SessionLocal, engine, Base
 from app.db import models
 
 def seed():
-    # Ensure tables are created
+    
     Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
@@ -33,7 +33,7 @@ def seed():
 
     added_count = 0
     for s_data in students:
-        # Check if student already exists
+        
         exists = db.query(models.Student).filter(models.Student.register_number == s_data["register_number"]).first()
         if not exists:
             student = models.Student(**s_data)
