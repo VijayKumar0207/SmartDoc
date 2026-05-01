@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = '';
+const API_BASE_URL = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // 30 second timeout for email sending
 });
 
 

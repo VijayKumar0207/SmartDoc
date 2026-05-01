@@ -38,15 +38,22 @@ def send_email_with_attachment(to_email: str, subject: str, body: str, file_path
             )
         else:
             logger.error(f"Attachment file not found: {file_path}")
-            return False
+            raise Exception(f"Attachment file not found: {file_path}")
 
-        with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+        # Try to connect and send with better timeout handling
+        with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10) as server:
             server.starttls()
             server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.send_message(msg)
 
         logger.info(f"Email sent successfully to {to_email}")
         return True
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication failed: Invalid email or password")
+        raise Exception(f"Email credentials are invalid. Check SMTP_USERNAME and SMTP_PASSWORD in .env file")
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP error: {str(e)}")
+        raise Exception(f"Email server error: {str(e)}")
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
         raise Exception(f"Failed to send email: {str(e)}")
